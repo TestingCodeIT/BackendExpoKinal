@@ -5,7 +5,8 @@ var Schema = mongoose.Schema;
 
 var teamSchema = Schema({
     name: String,
-    teamManager: { type: Schema.Types.ObjectId, ref: 'user' },
+    description: String,
+    // teamManager: { type: Schema.Types.ObjectId, ref: 'user' },
     integrants: [{
         user: { type: Schema.Types.ObjectId, ref: 'user' },
         role: String

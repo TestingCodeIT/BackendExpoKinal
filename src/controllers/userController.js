@@ -17,44 +17,26 @@ function signUp(req, res) {
     user.password = params.password;
     user.image = null;
 
-    User.find({
-      $or: [
-        { username: user.username.toLowerCase() },
-        { email: user.email.toLowerCase() }
-      ]
-    }).exec((err, users) => {
-      if (err)
-        return res.status(500).send({ message: "Error in search request" });
+    bcrypt.genSalt(10, function(err, salt) {
+      bcrypt.hash(params.password, salt, function(err, hash) {
+        user.password = hash;
 
-      if (user && users.length > 0) {
-        return res
-          .status(500)
-          .send({
-            message: "The username or email is already register with other user"
-          });
-      } else {
-        bcrypt.genSalt(10, function(err, salt) {
-          bcrypt.hash(params.password, salt, function(err, hash) {
-            user.password = hash;
+        user.save((err, storedUser) => {
+          if (err)
+            return res
+              .status(500)
+              .send({ message: "Error in save request" });
 
-            user.save((err, storedUser) => {
-              if (err)
-                return res
-                  .status(500)
-                  .send({ message: "Error in save request" });
-
-              if (!storedUser) {
-                return res
-                  .status(500)
-                  .send({ message: "User could not be stored" });
-              } else {
-                delete storedUser.password;
-                return res.status(200).send({ user: storedUser });
-              }
-            });
-          });
+          if (!storedUser) {
+            return res
+              .status(500)
+              .send({ message: "User could not be stored" });
+          } else {
+            delete storedUser.password;
+            return res.status(200).send({ user: storedUser });
+          }
         });
-      }
+      });
     });
   } else {
     return res
@@ -62,6 +44,10 @@ function signUp(req, res) {
       .send({ message: "You must fill all fields before saving" });
   }
 }
+
+/* function getUserId(req, res) {
+  var name = 
+} */
 
 function login(req, res) {
   var params = req.body;
@@ -72,20 +58,34 @@ function login(req, res) {
     if (err) return res.status(500).send({ message: "Error in request" });
 
     if (!foundUser) {
-      return res.status(500).send({ message: "User not found" });
+      return res.status(402).send({ message: "User not found" });
     } else {
       bcrypt.compare(password, foundUser.password, (err, check) => {
         if (!check) {
-          return res.status(500).send({ message: "Wrong password" });
+          return res.status(402).send({ message: "Wrong password" });
         } else {
           foundUser.password = undefined;
           return res
-            .status(500)
+            .status(200)
             .send({ foundUser, token: jwt.createToken(foundUser) });
         }
       });
     }
   });
+}
+
+function getUser(req, res){
+  let idUser = req.params.id;
+
+  User.findOne({ _id : idUser }).exec((err, user) => {
+      if (err) return res.status(500).send({ message: 'Request error!' });
+
+      if (!user) {
+          return res.status(500).send({ message: 'No found teams' });
+      } else {
+          return res.status(200).send({ users: user });
+      }
+  })
 }
 
 function editUser(req, res) {
@@ -105,11 +105,9 @@ function editUser(req, res) {
       if (err) return res.status(500).send({ message: "error en la peticion" });
 
       if (!usuarioActualizado)
-        return res
-          .status(404)
-          .send({
-            message: "No se ha podido actualziar los datos del usuario"
-          });
+        return res.status(404).send({
+          message: "No se ha podido actualziar los datos del usuario"
+        });
       usuarioActualizado.password = undefined;
       return res.status(200).send({ user: usuarioActualizado });
     }
@@ -173,11 +171,9 @@ function uploadImage(req, res) {
               .send({ message: " no se a podido actualizar el usuario" });
 
           if (!usuarioActualizado)
-            return res
-              .status(404)
-              .send({
-                message: "error en los datos del usuario, no se pudo actualizar"
-              });
+            return res.status(404).send({
+              message: "error en los datos del usuario, no se pudo actualizar"
+            });
 
           return res.status(200).send({ user: usuarioActualizado });
         }
@@ -207,11 +203,21 @@ function getImage(req, res) {
   });
 }
 
+function listUsers(req, res) {
+  User.find({}).exec((err, userUsers) => {
+      if (err) return res.status(500).send({ message: 'Request error!' });
+
+      return res.status(200).send({ users: userUsers });
+  })
+}
+
 module.exports = {
   signUp,
   login,
+  getUser,
   editUser,
   deleteUser,
   uploadImage,
-  getImage
+  getImage,
+  listUsers
 };

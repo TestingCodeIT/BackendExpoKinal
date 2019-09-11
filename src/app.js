@@ -12,6 +12,7 @@ var projectRoutes = require('./routes/projectRoutes');
 var taskRoutes = require('./routes/taskRoutes');
 var labelRoutes = require('./routes/labelRoutes');
 var teamRoutes = require('./routes/teamRoutes');
+var noteRoutes = require('./routes/noteRoutes');
 
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
@@ -33,5 +34,6 @@ app.use('/api/v1/teams', teamRoutes);
 app.use('/api/v1/projects', projectRoutes);
 app.use('/api/v1/labels', labelRoutes);
 app.use('/api/v1/tasks', taskRoutes);
+app.use('/api/v1/notes', noteRoutes);
 
 module.exports = app;
